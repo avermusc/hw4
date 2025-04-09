@@ -137,8 +137,10 @@ protected:
     virtual void nodeSwap( AVLNode<Key,Value>* n1, AVLNode<Key,Value>* n2);
 
     // Add helper functions here
-
-
+    // void rotateLeft(AVLNode<Key, Value>* node);
+    // void doubleRotateLeft(AVLNode<Key, Value>* node);
+    // void rotateRight(AVLNode<Key, Value>* node);
+    // void doubleRotateRight(AVLNode<Key, Value>* node);
 };
 
 /*
@@ -148,7 +150,44 @@ protected:
 template<class Key, class Value>
 void AVLTree<Key, Value>::insert (const std::pair<const Key, Value> &new_item)
 {
-    // TODO
+    //use same insert frim bst tree except use AVL nodes, handle balancing after
+        // make the node to be inserted
+    AVLNode<Key, Value>* insertion = new AVLNode<Key, Value>(new_item.first, new_item.second, NULL);
+    if (!(this->root_)){ //if tree ie empty, make new node the root
+      this->root_ = insertion;
+      return;
+    }
+    //otherwise trverse the tree to find the parent node of the node to be inserted
+    AVLNode<Key, Value>* curr = static_cast<AVLNode<Key, Value>*>(this->root_);
+    while(true){
+      if (curr->getKey() == insertion->getKey()){ //if the key already exists, just update the value
+        curr->setValue(insertion->getValue());
+        delete insertion;
+        return;
+      }
+      else if (curr->getKey() < insertion->getKey()){
+        if (curr->getRight()){
+          curr = curr->getRight();
+        }
+        else{
+          curr->setRight(insertion);
+          insertion->setParent(curr);
+          return;
+        }
+      }
+      else if (curr->getKey() > insertion->getKey()){
+        if (curr->getLeft()){
+          curr = curr->getLeft();
+        }
+        else{
+          curr->setLeft(insertion);
+          insertion->setParent(curr);
+          return;
+        }
+      }    
+    }
+    // handle balances/rotation
+
 }
 
 /*
@@ -158,7 +197,60 @@ void AVLTree<Key, Value>::insert (const std::pair<const Key, Value> &new_item)
 template<class Key, class Value>
 void AVLTree<Key, Value>:: remove(const Key& key)
 {
-    // TODO
+    //use same remove frim bst tree except use an AVL nodes, handle balancing after
+
+    if (!(this->root_)){ // if empty tree, no nodes to be removed
+      return;
+    }
+    AVLNode<Key, Value>* removed = static_cast<AVLNode<Key, Value>*>(this->internalFind(key));
+    if (removed){ //key exists, we should remove it
+      if (removed->getLeft() && removed->getRight()){ //if boh children exist, promote predecessor
+        nodeSwap(removed, static_cast<AVLNode<Key, Value>*>(BinarySearchTree<Key, Value>::predecessor(removed)));
+      }
+      AVLNode<Key, Value>* promoted = NULL;
+      if ((!removed->getLeft() && removed->getRight()) || ((removed->getLeft() && !removed->getRight()))){ //one child
+        if ((!removed->getLeft() && removed->getRight())){
+          promoted = removed->getRight();
+        }
+        else{
+          promoted = removed->getLeft();
+        }
+        if (removed->getParent()){
+          if (removed->getParent()->getLeft() == removed){
+            removed->getParent()->setLeft(promoted);
+          }
+          else{
+            removed->getParent()->setRight(promoted);
+          }
+        }
+        else{
+          this->root_ = promoted;
+        }
+        if (promoted){
+          promoted->setParent(removed->getParent());
+        }
+        delete removed;
+        return;
+      }
+      else{ // 0 children
+        if (removed->getParent()){
+          if (removed->getParent()->getLeft() == removed){
+            removed->getParent()->setLeft(NULL);
+          }
+          else{
+            removed->getParent()->setRight(NULL);
+          }
+        }
+        else{
+          this->root_ = NULL;
+        }
+      }
+      delete removed;
+      return;
+    }
+    else{
+      return;
+    }
 }
 
 template<class Key, class Value>
